@@ -25,8 +25,9 @@ import fastai_contrib.data as contrib_data
 # cupy needs to be installed for QRNN
 
 
-def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vocab=60000,
-                bs=70, bptt=70, name='wt-103', num_epochs=10,  bidir=False, ds_pct=1.0):
+def pretrain_lm(dir_path, lang='en', cuda_id=0, n_jobs=4, qrnn=True, subword=False,
+                max_vocab=60000, bs=70, bptt=70, name='wt-103', num_epochs=10,
+                bidir=False, ds_pct=1.0):
     """
     :param dir_path: The path to the directory of the file.
     :param lang: the language unicode
@@ -46,6 +47,7 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vo
     if not torch.cuda.is_available():
         print('CUDA not available. Setting device=-1.')
         cuda_id = -1
+        torch.set_num_threads(n_jobs)
     torch.cuda.set_device(cuda_id)
 
     dir_path = Path(dir_path)
@@ -58,16 +60,17 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vo
     if qrnn:
         print('Using QRNNs...')
 
-    trn_path = dir_path / f'{lang}.wiki.train.tokens'
-    val_path = dir_path / f'{lang}.wiki.valid.tokens'
-    tst_path = dir_path / f'{lang}.wiki.test.tokens'
+    splits = ['trn', 'val', 'tst']
+    trn_path = dir_path / f'{lang}.wiki.{splits[0]}.tokens'
+    val_path = dir_path / f'{lang}.wiki.{splits[1]}.tokens'
+    tst_path = dir_path / f'{lang}.wiki.{splits[2]}.tokens'
     for path_ in [trn_path, val_path, tst_path]:
         assert path_.exists(), f'Error: {path_} does not exist.'
 
     if subword:
         # apply sentencepiece tokenization
-        trn_path = dir_path / f'{lang}.wiki.train.tokens'
-        val_path = dir_path / f'{lang}.wiki.valid.tokens'
+        trn_path = dir_path / f'{lang}.wiki.{splits[0]}.tokens'
+        val_path = dir_path / f'{lang}.wiki.{splits[1]}.tokens'
 
         read_file(trn_path, 'train')
         read_file(val_path, 'valid')
@@ -163,8 +166,8 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, qrnn=True, subword=False, max_vo
     if not subword and max_vocab is None:
         # only if we use the unpreprocessed version and the full vocabulary
         # are the perplexity results comparable to previous work
-        print(f"Validating model performance with test tokens from: {trn_path}")
-        tst_tok = read_whitespace_file(trn_path)
+        print(f"Validating model performance with test tokens from: {tst_path}")
+        tst_tok = read_whitespace_file(tst_path)
         tst_ids = np.array([([stoi.get(w, stoi[UNK]) for w in s]) for s in tst_tok])
         logloss, perplexity = validate(learn.model, tst_ids, bptt)
         print('Test logloss:', logloss.item(), 'perplexity:', perplexity.item())
