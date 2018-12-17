@@ -11,7 +11,8 @@ from fastai import *
 from fastai.text import *
 import torch
 from fastai_contrib.utils import read_file, read_whitespace_file, \
-    validate, PAD, UNK, get_sentencepiece
+        read_whitespace_file_to_dump, read_dump_to_token, \
+        validate, PAD, UNK, get_sentencepiece
 from fastai_contrib.learner import bilm_learner, accuracy_fwd, accuracy_bwd
 import pickle
 
@@ -85,9 +86,11 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, n_jobs=4, qrnn=True, subword=Fal
     else:
         # read the already whitespace separated data without any preprocessing
         print(f'read train tokens from {trn_path}...')
-        trn_tok = read_whitespace_file(trn_path)
+        # trn_tok = read_whitespace_file(trn_path)
+        trn_tok = read_dump_to_token(read_whitespace_file_to_dump(trn_path))
         print(f'read valid tokens from {trn_path}...')
-        val_tok = read_whitespace_file(val_path)
+        # val_tok = read_whitespace_file(val_path)
+        val_tok = read_dump_to_token(read_whitespace_file_to_dump(val_path))
         if ds_pct < 1.0:
             trn_tok = trn_tok[:max(20, int(len(trn_tok) * ds_pct))]
             val_tok = val_tok[:max(20, int(len(val_tok) * ds_pct))]

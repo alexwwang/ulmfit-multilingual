@@ -7,6 +7,7 @@ import fire
 from fastai import F, to_device
 import torch
 from tqdm import tqdm
+from pickle import dump, load
 import re
 import csv
 
@@ -346,12 +347,31 @@ def read_whitespace_file(filepath):
     """Reads a file and prepares the tokens."""
     tokens = []
     with open(filepath, encoding='utf-8') as f:
-        for line in f:
+        for line in tqdm(f):
             # newlines are replaced with EOS
             tokens.append(line.split() + [EOS])
     return np.array(tokens)
 
 
+def read_whitespace_file_to_dump(filepath):
+    """Reads a file and prepraes the tokens and save to files."""
+    write_to_path = filepath.parent / f'{filepath.name}.pkl'
+    with open(filepath, encoding='utf-8') as fin:
+        with open(write_to_path, 'ab') as fout:
+            for line in tqdm(fin):
+                dump(line.split() + [EOS], fout)
+    return write_to_path
+
+
+def read_dump_to_token(filepath):
+    tokens = []
+    with open(filepath, 'rb') as fin:
+        while True:
+            try:
+                tokens.append(load(fin))
+            except EOFError:
+                break
+    return np.array(tokens)
 
 
 class DataStump:
