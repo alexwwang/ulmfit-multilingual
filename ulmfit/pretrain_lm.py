@@ -90,7 +90,7 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, n_jobs=4, qrnn=True, subword=Fal
         # trn_tok = read_whitespace_file(trn_path)
         trn_tok_path = read_whitespace_file_to_dump(trn_path)
 
-        print(f'read valid tokens from {trn_path}...')
+        print(f'read valid tokens from {val_path}...')
         # val_tok = read_whitespace_file(val_path)
         val_tok_path = read_whitespace_file_to_dump(val_path)
         # if ds_pct < 1.0:
@@ -101,6 +101,7 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, n_jobs=4, qrnn=True, subword=Fal
         itos_fname = model_dir / f'itos_{name}.pkl'
         if not itos_fname.exists():
             # create the vocabulary
+            print('Build vocab...')
             itos = build_vocab_on_dump(trn_tok_path, model_dir,
                     vocab_size=max_vocab, model_name=name)
             # print('Count tokens freq...')

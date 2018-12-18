@@ -412,7 +412,7 @@ def build_ids_on_dump(filepath, model_dir, stoi):
                     except EOFError:
                         break
                 np.save(fids, np.array(total_ids))
-    return ids, ids_path
+    return total_ids, ids_path
 
 
 class DataStump:
