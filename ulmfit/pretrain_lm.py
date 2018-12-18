@@ -133,8 +133,8 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, n_jobs=4, qrnn=True, subword=Fal
 
         # data_lm = TextLMDataBunch.from_ids(dir_path, trn_ids, [], val_ids, [], len(itos))
         data_lm = TextLMDataBunch.from_ids(path=dir_path, vocab=vocab,
-                train_ids=build_ids_on_dump(trn_tok_path, model_dir, stoi),
-                valid_ids=build_ids_on_dump(val_tok_path, model_dir, stoi),
+                train_ids=build_ids_on_dump(trn_tok_path, model_dir, stoi, ds_pct),
+                valid_ids=build_ids_on_dump(val_tok_path, model_dir, stoi, ds_pct),
                                            bs=bs, bptt=bptt,
                                            lm_type=lm_type
                                            )

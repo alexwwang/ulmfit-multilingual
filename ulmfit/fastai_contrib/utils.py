@@ -398,8 +398,8 @@ def build_vocab_on_dump(filepath, model_dir, vocab_size, model_name):
     return itos
 
 
-def build_ids_on_dump(filepath, model_dir, stoi):
-    ids_path = model_dir / f'{filepath.name}.ids.npy'
+def build_ids_on_dump(filepath, model_dir, stoi, ds_pct):
+    ids_path = model_dir / f'{filepath.name}.{ds_pct}.ids.npy'
     total_ids = []
     if ids_path.exists():
         print('Find dumping file, loading in.')
@@ -413,6 +413,9 @@ def build_ids_on_dump(filepath, model_dir, stoi):
                         total_ids.append([stoi.get(w, stoi[UNK]) for w in sentence])
                     except EOFError:
                         break
+                if ds_pct < 1.0:
+                    length = len(total_ids)
+                    total_ids = total_ids[:max(20, int(length * ds_pct))]
                 np.save(fids, np.array(total_ids))
     return total_ids
 
