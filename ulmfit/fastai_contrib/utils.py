@@ -356,6 +356,10 @@ def read_whitespace_file(filepath):
 def read_whitespace_file_to_dump(filepath):
     """Reads a file and prepraes the tokens and save to files."""
     write_to_path = filepath.parent / f'{filepath.name}.pkl'
+    if write_to_path.exists():
+        print('find tokens dump file, continue')
+        return write_to_path
+    print('read whitespace file to tokenize...')
     with open(filepath, encoding='utf-8') as fin:
         with open(write_to_path, 'ab') as fout:
             for line in tqdm(fin):
@@ -372,6 +376,43 @@ def read_dump_to_token(filepath):
             except EOFError:
                 break
     return np.array(tokens)
+
+
+def build_vocab_on_dump(filepath, model_dir, vocab_size, model_name):
+    counter = Counter()
+    vocab_path = model_dir / f'itos_{model_name}_ori.pkl'
+    if vocab_path.exists():
+        itos = load(open(vocab_path, 'rb'))
+    else:
+        with open(filepath, 'rb') as fin:
+            with open(vocab_path, 'wb') as fvocab:
+                while True:
+                    try:
+                        sentence = load(fin)
+                        counter.update(word for word in sentence)
+                    except EOFError:
+                        break
+                itos = [word for word, count in counter.most_common(n=vocab_size)]
+                dump(itos, fvocab)
+    return itos
+
+
+def build_ids_on_dump(filepath, model_dir, stoi):
+    ids_path = model_dir / f'{filepath.name}.ids.npy'
+    total_ids = []
+    if ids_path.exists():
+        total_ids = np.load(open(ids_path, 'rb'))
+    else:
+        with open(filepath, 'rb') as fin:
+            with open(ids_path, 'wb') as fids:
+                while True:
+                    try:
+                        sentence = load(fin)
+                        total_ids.append([stoi.get(w, stoi[UNK]) for w in sentence])
+                    except EOFError:
+                        break
+                np.save(fids, np.array(total_ids))
+    return ids, ids_path
 
 
 class DataStump:

@@ -11,7 +11,8 @@ from fastai import *
 from fastai.text import *
 import torch
 from fastai_contrib.utils import read_file, read_whitespace_file, \
-        read_whitespace_file_to_dump, read_dump_to_token, \
+        read_whitespace_file_to_dump, build_vocab_on_dump, \
+        build_ids_on_dump, \
         validate, PAD, UNK, get_sentencepiece
 from fastai_contrib.learner import bilm_learner, accuracy_fwd, accuracy_bwd
 import pickle
@@ -87,22 +88,25 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, n_jobs=4, qrnn=True, subword=Fal
         # read the already whitespace separated data without any preprocessing
         print(f'read train tokens from {trn_path}...')
         # trn_tok = read_whitespace_file(trn_path)
-        trn_tok = read_dump_to_token(read_whitespace_file_to_dump(trn_path))
+        trn_tok_path = read_whitespace_file_to_dump(trn_path)
+
         print(f'read valid tokens from {trn_path}...')
         # val_tok = read_whitespace_file(val_path)
-        val_tok = read_dump_to_token(read_whitespace_file_to_dump(val_path))
-        if ds_pct < 1.0:
-            trn_tok = trn_tok[:max(20, int(len(trn_tok) * ds_pct))]
-            val_tok = val_tok[:max(20, int(len(val_tok) * ds_pct))]
-            print(f"Limiting data sets to {ds_pct*100}%, trn {len(trn_tok)}, val: {len(val_tok)}")
+        val_tok_path = read_whitespace_file_to_dump(val_path)
+        # if ds_pct < 1.0:
+        #     trn_tok = trn_tok[:max(20, int(len(trn_tok) * ds_pct))]
+        #     val_tok = val_tok[:max(20, int(len(val_tok) * ds_pct))]
+        #     print(f"Limiting data sets to {ds_pct*100}%, trn {len(trn_tok)}, val: {len(val_tok)}")
 
         itos_fname = model_dir / f'itos_{name}.pkl'
         if not itos_fname.exists():
             # create the vocabulary
-            print('Count tokens freq...')
-            cnt = Counter(word for sent in trn_tok for word in sent)
-            print('Build vocab...')
-            itos = [o for o,c in cnt.most_common(n=max_vocab)]
+            itos = build_vocab_on_dump(trn_tok_path, model_dir,
+                    vocab_size=max_vocab, model_name=name)
+            # print('Count tokens freq...')
+            # cnt = Counter(word for sent in trn_tok for word in sent)
+            # print('Build vocab...')
+            # itos = [o for o,c in cnt.most_common(n=max_vocab)]
             itos.insert(1, PAD)  #  set pad id to 1 to conform to fast.ai standard
             assert UNK in itos, f'Unknown words are expected to have been replaced with {UNK} in the data.'
 
@@ -117,8 +121,10 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, n_jobs=4, qrnn=True, subword=Fal
         vocab = Vocab(itos)
         stoi = vocab.stoi
 
-        trn_ids = np.array([([stoi.get(w, stoi[UNK]) for w in s]) for s in trn_tok])
-        val_ids = np.array([([stoi.get(w, stoi[UNK]) for w in s]) for s in val_tok])
+        trn_ids, _ = build_ids_on_dump(trn_tok_path, model_dir, stoi)
+        # trn_ids = np.array([([stoi.get(w, stoi[UNK]) for w in s]) for s in trn_tok])
+        val_ids, _ = build_ids_on_dump(val_tok_path, model_dir, stoi)
+        # val_ids = np.array([([stoi.get(w, stoi[UNK]) for w in s]) for s in val_tok])
 
         lm_type = contrib_data.LanguageModelType.BiLM if bidir else  contrib_data.LanguageModelType.FwdLM
 
