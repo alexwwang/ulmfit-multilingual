@@ -382,6 +382,7 @@ def build_vocab_on_dump(filepath, model_dir, vocab_size, model_name):
     counter = Counter()
     vocab_path = model_dir / f'itos_{model_name}_ori.pkl'
     if vocab_path.exists():
+        print('Find dumping file, loading in.')
         itos = load(open(vocab_path, 'rb'))
     else:
         with open(filepath, 'rb') as fin:
@@ -401,6 +402,7 @@ def build_ids_on_dump(filepath, model_dir, stoi):
     ids_path = model_dir / f'{filepath.name}.ids.npy'
     total_ids = []
     if ids_path.exists():
+        print('Find dumping file, loading in.')
         total_ids = np.load(open(ids_path, 'rb'))
     else:
         with open(filepath, 'rb') as fin:

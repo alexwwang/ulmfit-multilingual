@@ -122,8 +122,10 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, n_jobs=4, qrnn=True, subword=Fal
         vocab = Vocab(itos)
         stoi = vocab.stoi
 
+        print('Build training ids...')
         trn_ids, _ = build_ids_on_dump(trn_tok_path, model_dir, stoi)
         # trn_ids = np.array([([stoi.get(w, stoi[UNK]) for w in s]) for s in trn_tok])
+        print('Build validating ids...')
         val_ids, _ = build_ids_on_dump(val_tok_path, model_dir, stoi)
         # val_ids = np.array([([stoi.get(w, stoi[UNK]) for w in s]) for s in val_tok])
 
