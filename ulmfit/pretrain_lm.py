@@ -123,18 +123,18 @@ def pretrain_lm(dir_path, lang='en', cuda_id=0, n_jobs=4, qrnn=True, subword=Fal
         stoi = vocab.stoi
 
         print('Build training ids...')
-        # trn_ids, _ = build_ids_on_dump(trn_tok_path, model_dir, stoi)
+        trn_ids = build_ids_on_dump(trn_tok_path, model_dir, stoi, ds_pct)
         # trn_ids = np.array([([stoi.get(w, stoi[UNK]) for w in s]) for s in trn_tok])
         print('Build validating ids...')
-        # val_ids, _ = build_ids_on_dump(val_tok_path, model_dir, stoi)
+        val_ids = build_ids_on_dump(val_tok_path, model_dir, stoi, ds_pct)
         # val_ids = np.array([([stoi.get(w, stoi[UNK]) for w in s]) for s in val_tok])
 
         lm_type = contrib_data.LanguageModelType.BiLM if bidir else  contrib_data.LanguageModelType.FwdLM
 
         # data_lm = TextLMDataBunch.from_ids(dir_path, trn_ids, [], val_ids, [], len(itos))
         data_lm = TextLMDataBunch.from_ids(path=dir_path, vocab=vocab,
-                train_ids=build_ids_on_dump(trn_tok_path, model_dir, stoi, ds_pct),
-                valid_ids=build_ids_on_dump(val_tok_path, model_dir, stoi, ds_pct),
+                                           train_ids=trn_ids,
+                                           valid_ids=val_ids,
                                            bs=bs, bptt=bptt,
                                            lm_type=lm_type
                                            )
